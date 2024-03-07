@@ -1,1 +1,1 @@
-# 0x04. Files managerd
+# 0x04. Files manager
