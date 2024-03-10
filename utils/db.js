@@ -6,21 +6,14 @@ class DBClient {
     const port = process.env.DB_PORT || 27017; // Port should be a number, not a string
     this.dbName = process.env.DB_DATABASE || 'files_manager';
     this.client = new MongoClient(`mongodb://${host}:${port}`,
-      {
-        useUnifiedTopology: true,
-        useNewUrlParser: true,
-      });
-    this.db = null;
+      { useUnifiedTopology: true });
+    this.client.connect((err) => {
+      if (!err) this.db = this.client.db(this.dbName);
+    });
   }
 
-  async isAlive() {
-    try {
-      await this.client.connect();
-      this.db = this.client.db(this.dbName);
-      return true;
-    } catch (error) {
-      return false;
-    }
+  isAlive() {
+    return this.client.isConnected();
   }
 
   async nbUsers() {
