@@ -12,10 +12,10 @@ class AppController {
     }
   }
 
-  static getStats(_req, res) {
-    const files = dbClient.nbFiles();
-    const users = dbClient.nbUsers();
-    res.status(200).json({ users: files, files: users });
+  static async getStats(_req, res) {
+    const files = await dbClient.nbFiles();
+    const users = await dbClient.nbUsers();
+    res.status(200).json({ files, users });
   }
 }
 
