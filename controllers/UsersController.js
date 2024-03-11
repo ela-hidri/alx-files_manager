@@ -5,25 +5,25 @@ class UsersController {
   static async postNew(req, res) {
     const { email, password } = req.body;
     if (!email) {
-      res.status(400).json({ error: 'Missing email' });
+      return res.status(400).json({ error: 'Missing email' });
     }
     if (!password) {
-      res.status(400).json({ error: 'Missing password' });
+      return res.status(400).json({ error: 'Missing password' });
     }
+
     const collection = dbClient.db.collection('users');
     const user = await collection.findOne({ email });
     if (user) {
-      res.status(400).json({ error: 'Already exist' });
-    } else {
-      const hashed = sha1(password);
-      const rst = await collection.insertOne({ email, hashed });
-      const NewUser = {
-        email,
-        id: rst.ops[0].id,
-      };
-      res.status(201).json(NewUser);
+      return res.status(400).json({ error: 'User already exists' });
     }
+    const hashedPassword = sha1(password);
+    const result = await collection.insertOne({ email, password: hashedPassword });
+    const newUser = {
+      id: result.insertedId,
+      email,
+    };
+    return res.status(201).json(newUser);
   }
 }
 
-module.exports = UsersController;
+export default UsersController;
