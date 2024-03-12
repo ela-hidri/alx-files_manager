@@ -6,7 +6,7 @@ const fs = require('fs');
 
 class FilesController {
   static async postUpload(req, res) {
-    const token = req.headers.authorization;
+    const token = req.headers['X-Token'];
     if (!token) {
       return res.status(400).json({ error: 'Unauthorized' });
     }
