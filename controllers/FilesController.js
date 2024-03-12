@@ -6,11 +6,11 @@ const fs = require('fs');
 
 class FilesController {
   static async postUpload(req, res) {
-    const token = req.headers['X-Token'];
+    const token = req.headers['x-token'];
     if (!token) {
       return res.status(400).json({ error: 'Unauthorized' });
     }
-    const UserId = await redisClient.get(token);
+    const UserId = await redisClient.get(`auth_${token}`);
     const Usercollection = dbClient.db.collection('users');
     const FilesCollection = dbClient.db.collection('files');
     const user = await Usercollection.findOne({ id: UserId });
