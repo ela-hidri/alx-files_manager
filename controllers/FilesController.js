@@ -147,21 +147,37 @@ class FilesController {
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+
     const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const Usercollection = dbClient.db.collection('users');
     const user = await Usercollection.findOne({ _id: ObjectId(userId) });
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const id = req.params;
+
+    const { id } = req.params;
     const newValue = { $set: { isPublic: true } };
-    dbClient.db.findOneAndUpdate({ _id: ObjectId(id), userId: user._id }, newValue, (err, file) => {
-      if (!file.lastErrorObject.updatedExisting) {
+
+    try {
+      const result = await dbClient.db.collection('files').findOneAndUpdate(
+        { _id: ObjectId(id), userId: user._id },
+        newValue,
+        { returnOriginal: true },
+      );
+
+      if (!result.value) {
         return res.status(404).json({ error: 'Not found' });
       }
-      return res.status(200).json(file.value);
-    });
-    return null;
+
+      return res.status(200).json(result.value);
+    } catch (error) {
+      console.error('Error occurred:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
   }
 
   static async putUnpublish(req, res) {
@@ -169,21 +185,37 @@ class FilesController {
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+
     const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const Usercollection = dbClient.db.collection('users');
     const user = await Usercollection.findOne({ _id: ObjectId(userId) });
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const id = req.params;
-    const newValue = { $set: { isPublic: false } };
-    dbClient.db.findOneAndUpdate({ _id: ObjectId(id), userId: user._id }, newValue, (err, file) => {
-      if (!file.lastErrorObject.updatedExisting) {
+
+    const { id } = req.params;
+    const newValue = { $set: { isPublic: true } };
+
+    try {
+      const result = await dbClient.db.collection('files').findOneAndUpdate(
+        { _id: ObjectId(id), userId: user._id },
+        newValue,
+        { returnOriginal: false },
+      );
+
+      if (!result.value) {
         return res.status(404).json({ error: 'Not found' });
       }
-      return res.status(200).json(file.value);
-    });
-    return null;
+
+      return res.status(200).json(result.value);
+    } catch (error) {
+      console.error('Error occurred:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
   }
 }
 
