@@ -19,8 +19,9 @@ class FilesController {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const {
-      name, type, data, isPublic = false, parentId = 0,
+      name, type, data, isPublic = false,
     } = req.body;
+    const parentId = req.body.parentId || '0';
     if (!name) {
       return res.status(400).json({ error: 'Missing name' });
     }
@@ -41,11 +42,11 @@ class FilesController {
     }
     if (type === 'folder') {
       const result = await FilesCollection.insertOne({
-        UserId, name, type, isPublic, parentId,
+        UserId: user._id, name, type, isPublic, parentId,
       });
       return res.status(201).json({
         id: result.insertedId,
-        UserId,
+        UserId: user._id,
         name,
         type,
         isPublic,
@@ -60,11 +61,11 @@ class FilesController {
 
     fs.writeFileSync(localPath, fileData);
     const result = await FilesCollection.insertOne({
-      UserId, name, type, isPublic, parentId, localPath,
+      UserId: user._id, name, type, isPublic, parentId, localPath,
     });
     return res.status(201).json({
       id: result.insertedId,
-      UserId,
+      UserId: user._id,
       name,
       type,
       isPublic,
