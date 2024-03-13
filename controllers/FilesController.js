@@ -10,14 +10,14 @@ class FilesController {
   static async postUpload(req, res) {
     const token = req.headers['x-token'];
     if (!token) {
-      return res.status(400).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
     const UserId = await redisClient.get(`auth_${token}`);
     const Usercollection = dbClient.db.collection('users');
     const FilesCollection = dbClient.db.collection('files');
     const user = await Usercollection.findOne({ _id: ObjectId(UserId) });
     if (!user) {
-      return res.status(400).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
     const {
       name, type, data, isPublic = false, parentId = 0,
