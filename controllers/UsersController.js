@@ -1,4 +1,5 @@
 import sha1 from 'sha1';
+import mongoDBCore from 'mongodb/lib/core';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
@@ -37,7 +38,8 @@ class UsersController {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const user = await (await dbClient.usersCollection()).findOne({ userId });
+    const user = await (await dbClient.usersCollection())
+      .findOne({ _id: new mongoDBCore.BSON.ObjectId(userId) });
     return res.status(200).json({ id: user._id.toString(), email: user.email });
   }
 }

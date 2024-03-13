@@ -35,6 +35,10 @@ class DBClient {
       return -1;
     }
   }
+
+  async usersCollection() {
+    return this.db.collection('users');
+  }
 }
 
 const dbClient = new DBClient();
