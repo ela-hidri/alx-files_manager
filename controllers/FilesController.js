@@ -141,6 +141,50 @@ class FilesController {
       ]).toArray();
     return res.status(200).json(files);
   }
+
+  static async putPublish(req, res) {
+    const token = req.headers['x-token'];
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const userId = await redisClient.get(`auth_${token}`);
+    const Usercollection = dbClient.db.collection('users');
+    const user = await Usercollection.findOne({ _id: ObjectId(userId) });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const id = req.params;
+    const newValue = { $set: { isPublic: true } };
+    dbClient.db.findOneAndUpdate({ _id: ObjectId(id), userId: user._id }, newValue, (err, file) => {
+      if (!file.lastErrorObject.updatedExisting) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      return res.status(200).json(file.value);
+    });
+    return null;
+  }
+
+  static async putUnpublish(req, res) {
+    const token = req.headers['x-token'];
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const userId = await redisClient.get(`auth_${token}`);
+    const Usercollection = dbClient.db.collection('users');
+    const user = await Usercollection.findOne({ _id: ObjectId(userId) });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const id = req.params;
+    const newValue = { $set: { isPublic: false } };
+    dbClient.db.findOneAndUpdate({ _id: ObjectId(id), userId: user._id }, newValue, (err, file) => {
+      if (!file.lastErrorObject.updatedExisting) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      return res.status(200).json(file.value);
+    });
+    return null;
+  }
 }
 
 module.exports = FilesController;
