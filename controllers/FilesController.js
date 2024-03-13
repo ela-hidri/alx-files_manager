@@ -12,9 +12,9 @@ class FilesController {
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const UserId = await redisClient.get(`auth_${token}`);
+    const userId = await redisClient.get(`auth_${token}`);
     const Usercollection = dbClient.db.collection('users');
-    const user = await Usercollection.findOne({ _id: ObjectId(UserId) });
+    const user = await Usercollection.findOne({ _id: ObjectId(userId) });
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -42,11 +42,11 @@ class FilesController {
     }
     if (type === 'folder') {
       const result = await FilesCollection.insertOne({
-        UserId: user._id, name, type, isPublic, parentId,
+        userId: user._id, name, type, isPublic, parentId,
       });
       return res.status(201).json({
         id: result.insertedId,
-        UserId: user._id,
+        userId: user._id,
         name,
         type,
         isPublic,
@@ -61,11 +61,11 @@ class FilesController {
 
     fs.writeFileSync(localPath, fileData);
     const result = await FilesCollection.insertOne({
-      UserId: user._id, name, type, isPublic, parentId, localPath,
+      userId: user._id, name, type, isPublic, parentId, localPath,
     });
     return res.status(201).json({
       id: result.insertedId,
-      UserId: user._id,
+      userId: user._id,
       name,
       type,
       isPublic,
