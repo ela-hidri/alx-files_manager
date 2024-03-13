@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import mongoDBCore from 'mongodb/lib/core';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
@@ -74,6 +75,75 @@ class FilesController {
     };
 
     return res.status(201).json({ newFile });
+  }
+
+  static async getShow(req, res) {
+    const token = req.headers['x-token'];
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const id = req.params;
+    const fileId = new mongoDBCore.BSON.ObjectId(id);
+    const file = await dbClient.db.collection('files')
+      .findOne({ _id: fileId, userId });
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    return res.status(200).json(file);
+  }
+
+  static async getIndex(req, res) {
+    const token = req.headers['x-token'];
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user = await (await dbClient.usersCollection())
+      .findOne({ _id: new mongoDBCore.BSON.ObjectId(userId) });
+
+    const parentId = req.query.parentId || '0';
+    const page = Number.parseInt(req.query.page, 10) || 0;
+    const pageSize = 20;
+    const startIndex = page * pageSize;
+
+    const filesFilter = {
+      userId: user._id,
+      parentId: parentId === '0' ? '0' : new mongoDBCore.BSON.ObjectId(parentId),
+    };
+
+    const files = await dbClient.filesCollection()
+      .aggregate([
+        { $match: filesFilter },
+        { $sort: { _id: -1 } },
+        { $skip: startIndex },
+        { $limit: pageSize },
+        {
+          $project: {
+            _id: 0,
+            id: '$_id',
+            userId: '$userId',
+            name: '$name',
+            type: '$type',
+            isPublic: '$isPublic',
+            parentId: {
+              $cond: { if: { $eq: ['$parentId', '0'] }, then: 0, else: '$parentId' },
+            },
+          },
+        },
+      ]).toArray();
+    return res.status(200).json(files);
   }
 }
 
