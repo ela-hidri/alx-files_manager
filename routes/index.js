@@ -28,6 +28,14 @@ router.post('/files', (req, res) => {
   FilesController.postUpload(req, res);
 });
 
+router.put('/files/:id/publish', (req, res) => {
+  FilesController.putPublish(req, res);
+});
+
+router.put('/files/:id/unpublish', (req, res) => {
+  FilesController.putUnpublish(req, res);
+});
+
 router.get('/files/:id', FilesController.getShow);
 router.get('/files', FilesController.getIndex);
 
