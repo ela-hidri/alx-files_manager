@@ -85,9 +85,8 @@ class FilesController {
     }
 
     const id = req.params;
-    const fileId = new mongoDBCore.BSON.ObjectId(id);
     const file = await dbClient.db.collection('files')
-      .findOne({ _id: fileId, userId });
+      .findOne({ _id: ObjectId(id), userId });
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
     }
@@ -107,7 +106,7 @@ class FilesController {
     }
 
     const user = await (await dbClient.usersCollection())
-      .findOne({ _id: new mongoDBCore.BSON.ObjectId(userId) });
+      .findOne({ _id: ObjectId(userId) });
 
     const parentId = req.query.parentId || '0';
     const page = Number.parseInt(req.query.page, 10) || 0;
