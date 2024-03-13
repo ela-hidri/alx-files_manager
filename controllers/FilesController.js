@@ -33,7 +33,7 @@ class FilesController {
     const FilesCollection = dbClient.db.collection('files');
     if (parentId) {
       const idObject = new ObjectId(parentId);
-      const file = await FilesCollection.findOne({ _id: idObject, userId: user.id });
+      const file = await FilesCollection.findOne({ _id: idObject });
       if (!file) {
         return res.status(400).json({ error: 'Parent not found' });
       } if (file.type !== 'folder') {
@@ -87,7 +87,7 @@ class FilesController {
       }
       const { id } = req.params;
       const file = await dbClient.db.collection('files')
-        .findOne({ _id: ObjectId(id), userId });
+        .findOne({ _id: ObjectId(id), userId: ObjectId(userId) });
       if (!file) {
         return res.status(404).json({ error: 'Not found' });
       }
@@ -115,14 +115,14 @@ class FilesController {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const parentId = req.query.parentId || '0';
+      const parentId = req.query.parentId || 0;
       const page = Number.parseInt(req.query.page, 10) || 0;
       const pageSize = 20;
       const startIndex = page * pageSize;
 
       const filesFilter = {
         userId: user._id,
-        parentId: parentId === '0' ? '0' : new ObjectId(parentId),
+        parentId: parentId === 0 ? 0 : new ObjectId(parentId),
       };
 
       const files = await dbClient.db.collection('files')
@@ -140,7 +140,7 @@ class FilesController {
               type: '$type',
               isPublic: '$isPublic',
               parentId: {
-                $cond: { if: { $eq: ['$parentId', '0'] }, then: 0, else: '$parentId' },
+                $cond: { if: { $eq: ['$parentId', 0] }, then: 0, else: '$parentId' },
               },
             },
           },
