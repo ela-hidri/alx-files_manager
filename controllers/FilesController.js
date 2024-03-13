@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import mongoDBCore from 'mongodb/lib/core';
+import { ObjectId } from 'mongodb';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
@@ -14,15 +15,13 @@ class FilesController {
     const UserId = await redisClient.get(`auth_${token}`);
     const Usercollection = dbClient.db.collection('users');
     const FilesCollection = dbClient.db.collection('files');
-    const user = await Usercollection.findOne({ id: UserId });
+    const user = await Usercollection.findOne({ _id: ObjectId(UserId) });
     if (!user) {
       return res.status(400).json({ error: 'Unauthorized' });
     }
     const {
-      name, type, data,
+      name, type, data, isPublic = false, parentId = 0,
     } = req.body;
-    const isPublic = req.body.isPublic || false;
-    const parentId = req.body.parentId || 0;
     if (!name) {
       return res.status(400).json({ error: 'Missing name' });
     }
@@ -33,7 +32,7 @@ class FilesController {
       return res.status(400).json({ error: 'Missing data' });
     }
     if (parentId) {
-      const file = await Usercollection.findOne({ id: parentId });
+      const file = await FilesCollection.findOne({ _id: ObjectId(parentId) });
       if (!file) {
         return res.status(400).json({ error: 'Parent not found' });
       } if (file.type !== 'folder') {
