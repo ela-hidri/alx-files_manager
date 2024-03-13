@@ -14,7 +14,6 @@ class FilesController {
     }
     const UserId = await redisClient.get(`auth_${token}`);
     const Usercollection = dbClient.db.collection('users');
-    const FilesCollection = dbClient.db.collection('files');
     const user = await Usercollection.findOne({ _id: ObjectId(UserId) });
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -31,6 +30,7 @@ class FilesController {
     if (!data && type !== 'folder') {
       return res.status(400).json({ error: 'Missing data' });
     }
+    const FilesCollection = dbClient.db.collection('files');
     if (parentId) {
       const file = await FilesCollection.findOne({ _id: ObjectId(parentId) });
       if (!file) {
@@ -62,7 +62,7 @@ class FilesController {
     const result = await FilesCollection.insertOne({
       UserId, name, type, isPublic, parentId, localPath,
     });
-    const newFile = {
+    return res.status(201).json({
       id: result.insertedId,
       UserId,
       name,
@@ -70,9 +70,7 @@ class FilesController {
       isPublic,
       parentId,
       localPath,
-    };
-
-    return res.status(201).json({ newFile });
+    });
   }
 
   static async getShow(req, res) {
