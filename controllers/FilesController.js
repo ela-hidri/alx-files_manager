@@ -25,7 +25,7 @@ class FilesController {
     if (!name) {
       return res.status(400).json({ error: 'Missing name' });
     }
-    if (!type || !(type in ['folder', 'file', 'image'])) {
+    if (!type || !(['folder', 'file', 'image'].includes(type))) {
       return res.status(400).json({ error: 'Missing type' });
     }
     if (!data && type !== 'folder') {
@@ -43,15 +43,14 @@ class FilesController {
       const result = await FilesCollection.insertOne({
         UserId, name, type, isPublic, parentId,
       });
-      const newFile = {
+      return res.status(201).json({
         id: result.insertedId,
         UserId,
         name,
         type,
         isPublic,
         parentId,
-      };
-      return res.status(201).json(newFile);
+      });
     }
     const path = process.env.FOLDER_PATH || '/tmp/files_manager';
     if (!fs.existsSync(path)) { fs.mkdirSync(path); }
