@@ -21,7 +21,7 @@ class FilesController {
     const {
       name, type, data, isPublic = false,
     } = req.body;
-    const parentId = req.body.parentId || '0';
+    const parentId = ObjectId(req.body.parentId) || '0';
     if (!name) {
       return res.status(400).json({ error: 'Missing name' });
     }
@@ -33,7 +33,7 @@ class FilesController {
     }
     const FilesCollection = dbClient.db.collection('files');
     if (parentId) {
-      const file = await FilesCollection.findOne({ _id: ObjectId(parentId) });
+      const file = await FilesCollection.findOne({ _id: parentId });
       if (!file) {
         return res.status(400).json({ error: 'Parent not found' });
       } if (file.type !== 'folder') {
@@ -166,7 +166,7 @@ class FilesController {
       const result = await dbClient.db.collection('files').findOneAndUpdate(
         { _id: ObjectId(id), userId: user._id },
         newValue,
-        { returnOriginal: true },
+        { returnOriginal: false },
       );
 
       if (!result.value) {
@@ -198,7 +198,7 @@ class FilesController {
     }
 
     const { id } = req.params;
-    const newValue = { $set: { isPublic: true } };
+    const newValue = { $set: { isPublic: false } };
 
     try {
       const result = await dbClient.db.collection('files').findOneAndUpdate(
