@@ -123,9 +123,17 @@ class FilesController {
 
       const filesFilter = {
         userId: user._id,
-        parentId: parentId === 0 ? 0 : new ObjectId(parentId),
       };
 
+      if (parentId) {
+        if (parentId === '0') {
+          filesFilter.parentId = parseInt(parentId, 10);
+        } else {
+          filesFilter.parentId = ObjectId(
+            ObjectId.isValid(parentId) ? parentId : Buffer.alloc(24, '0').toString('utf-8'),
+          );
+        }
+      }
       const files = await dbClient.db.collection('files')
         .aggregate([
           { $match: filesFilter },
