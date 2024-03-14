@@ -4,6 +4,7 @@ import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
 const fs = require('fs');
+const mime = require('mime-types');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -226,6 +227,48 @@ class FilesController {
     } catch (error) {
       console.error('Error occurred:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+
+  static async getFile(req, res) {
+    const idFile = req.params.id || '';
+    const size = req.query.size || 0;
+
+    const fileDocument = await dbClient.db
+      .collection('files')
+      .findOne({ _id: ObjectId(idFile) });
+    if (!fileDocument) return res.status(404).send({ error: 'Not found' });
+
+    const { isPublic } = fileDocument;
+    const { userId } = fileDocument;
+    const { type } = fileDocument;
+
+    let user = null;
+    let owner = false;
+
+    const token = req.header('X-Token') || null;
+    if (token) {
+      const redisToken = await redisClient.get(`auth_${token}`);
+      if (redisToken) {
+        user = await dbClient.db
+          .collection('users')
+          .findOne({ _id: ObjectId(redisToken) });
+        if (user) owner = user._id.toString() === userId.toString();
+      }
+    }
+
+    if (!isPublic && !owner) return res.status(404).send({ error: 'Not found' });
+    if (['folder'].includes(type)) return res.status(400).send({ error: "A folder doesn't have content" });
+
+    const realPath = size === 0 ? fileDocument.localPath : `${fileDocument.localPath}_${size}`;
+
+    try {
+      const dataFile = fs.readFileSync(realPath);
+      const mimeType = mime.contentType(fileDocument.name);
+      res.setHeader('Content-Type', mimeType);
+      return res.send(dataFile);
+    } catch (error) {
+      return res.status(404).send({ error: 'Not found' });
     }
   }
 }

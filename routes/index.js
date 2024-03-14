@@ -37,6 +37,7 @@ router.put('/files/:id/unpublish', (req, res) => {
 });
 
 router.get('/files/:id', FilesController.getShow);
+router.get('/files/:id/data', FilesController.getFile);
 router.get('/files', FilesController.getIndex);
 
 module.exports = router;
